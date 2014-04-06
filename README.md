@@ -20,6 +20,7 @@ Just run the app, select your iTunes backup folder, your output folder and click
 
 iTunes backup folder example: 
 - Windows 7 : "C:\Users\[USERNAME]\AppData\Roaming\Apple Computer\MobileSync\Backup\[YOUR_BACKUP_FOLDER\]"
+
 - Windows XP : "C:\Documents and Settings\[USERNAME]\Application Data\Apple Computer\MobileSync\Backup\[YOUR_BACKUP_FOLDER\]"
 
   
@@ -27,41 +28,43 @@ Extracted files
 =====
 The app will extract the following files:
 
-1. Images
+- Images
  - JPG
  - BMP
  - GIF
  - TIF
  - PNG
 	
-2. Videos
+- Videos
  - MOV
  - MP4
  - AVI
  - FLV
 	
-3. Audio files
+- Audio files
  - WMV
  - MP3
  - FLAC
  - M4A
 	
-4. Compressed files
+- Compressed files
  - ZIP
  - RAR
  - GZ
 	
-5. Database files
+- Database files
  - SQLITE
 	
-6. Other files
+- Other files
  - PDF
 	
   
 Known Limitations
 =================
 - Does not work with encrypted backup.
+
 - Does not rename your backup files. The filename result will be a sha1 string but with the right extension.
+
 - This is Captain Obvious and I want to say that this app will not extract anything if you backup your iDevice with iCloud! It only works with old-school computer backup.
 
 	 
