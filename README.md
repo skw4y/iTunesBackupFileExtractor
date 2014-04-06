@@ -27,34 +27,34 @@ Extracted files
 =====
 The app will extract the following files:
 
-- Images
+1. Images
  - JPG
  - BMP
  - GIF
  - TIF
  - PNG
 	
-- Videos
+2. Videos
  - MOV
  - MP4
  - AVI
  - FLV
 	
-- Audio files
+3. Audio files
  - WMV
  - MP3
  - FLAC
  - M4A
 	
-- Compressed files
+4. Compressed files
  - ZIP
  - RAR
  - GZ
 	
-- Database files
+5. Database files
  - SQLITE
 	
-- Other files
+6. Other files
  - PDF
 	
   
