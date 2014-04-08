@@ -19,9 +19,9 @@ Compile application using Visual Studio.
 Just run the app, select your iTunes backup folder, your output folder and click on "Go!" to start the extraction.
 
 iTunes backup folder example: 
-- Windows 7 : "C:\Users\[USERNAME]\AppData\Roaming\Apple Computer\MobileSync\Backup\[YOUR_BACKUP_FOLDER]"
+- Windows 7 : "C:\Users\USERNAME\AppData\Roaming\Apple Computer\MobileSync\Backup\YOUR_BACKUP_FOLDER"
 
-- Windows XP : "C:\Documents and Settings\[USERNAME]\Application Data\Apple Computer\MobileSync\Backup\[YOUR_BACKUP_FOLDER]"
+- Windows XP : "C:\Documents and Settings\USERNAME\Application Data\Apple Computer\MobileSync\Backup\YOUR_BACKUP_FOLDER"
 
   
 Extracted files 
