@@ -68,6 +68,11 @@ Known Limitations
 - This is Captain Obvious and I want to say that this app will not extract anything if you backup your iDevice with iCloud! It only works with old-school computer backup.
 
 	 
-License
+Contact
 =======
-MIT License.  Copyright 2014 Skw4y.
+You can contact me at: string.Format("{0}#{1}","contact","skway.fr").Replace("#","@");
+
+Donations are welcome:
+- BTC: 174Eud8voesGp3YcpzjZJGjcjYAr2V42fH
+
+Written by Skw4y in 2014. Released under the terms of the MIT License.  
