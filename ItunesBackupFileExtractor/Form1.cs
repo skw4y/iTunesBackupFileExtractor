@@ -10,36 +10,62 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using MetroFramework.Forms;
 
 
 namespace ItunesBackupFileExtractor
 {
-    public partial class Form1 : Form
+    public partial class Form1 : MetroFramework.Forms.MetroForm
     {
         private string[] BackupFiles;
-        private IEnumerable<MagicNumberElem> MagicNumberList;
+        private IEnumerable<ExtensionTypeElem> ExtensionTypeList;
         private string OutputFolder;
+        private string iTunesBackupFolder;
+        private List<string> checkedCheckbox;
 
         public Form1()
         {
+            
             InitializeComponent();
         }
 
+        /// <summary>
+        /// On loading
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Form1_Load(object sender, EventArgs e)
         {
+            //Print the app version on the form title
             this.Text += string.Format(" v{0}", Application.ProductVersion);
+            checkedCheckbox = null;
         }
 
+        /// <summary>
+        /// Browse iTunes backup folder
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnBackupFolderBrowse_Click(object sender, EventArgs e)
         {
             txtBackupFolder.Text = BrowseMe();
         }
 
+        /// <summary>
+        /// Browse output folder
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnOutputFolderBrowse_Click(object sender, EventArgs e)
         {
             txtOutputFolder.Text = BrowseMe();
         }
 
+        /// <summary>
+        /// On Launch
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnLaunch_Click(object sender, EventArgs e)
         {
             try
@@ -51,15 +77,25 @@ namespace ItunesBackupFileExtractor
                         throw new Exception("Please select the iTunes backup folder and the output folder.");
                     }
 
-                    OutputFolder = txtOutputFolder.Text.EndsWith("\\") ? txtOutputFolder.Text : txtOutputFolder.Text +"\\";
-                    BackupFiles = Directory.GetFiles(txtBackupFolder.Text, "*.*", SearchOption.TopDirectoryOnly);
+                    OutputFolder = txtOutputFolder.Text.EndsWith("\\") ? txtOutputFolder.Text : txtOutputFolder.Text + "\\";
+                    iTunesBackupFolder = txtBackupFolder.Text.EndsWith("\\") ? txtBackupFolder.Text : txtBackupFolder.Text + "\\";
+
+                    //Getting files from selected directory
+                    BackupFiles = Directory.GetFiles(iTunesBackupFolder, "*.*", SearchOption.TopDirectoryOnly);
                     if (BackupFiles.Count() == 0)
                     {
                         throw new Exception("Nothing found in your iTunes backup folder. Select the right folder and try again.");
                     }
 
-                    MagicNumberList = GetMagicNumberList();
+                    if (checkedCheckbox == null || checkedCheckbox.Count==0)
+                    {
+                        throw new Exception("Please select a checkbox.");
+                    }
 
+                    //Getting file extensions from the config file
+                    ExtensionTypeList = GetExtensionTypeList();
+
+                    //Launch background worker
                     backgroundWorker1.RunWorkerAsync();
 
                     btnLaunch.Enabled = false;
@@ -72,6 +108,37 @@ namespace ItunesBackupFileExtractor
             }
         }
 
+        /// <summary>
+        /// On chkAll Checked Changed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void chkAll_CheckedChanged(object sender, EventArgs e)
+        {
+            var checkboxes = from c in this.Controls.OfType<CheckBox>()
+                             select c;
+            checkboxes.ToList().ForEach(c => c.Checked = chkAll.Checked);
+        }
+
+        /// <summary>
+        /// On checkBox Checked Changed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void checkBox_CheckedChanged(object sender, EventArgs e)
+        {
+            var checkboxes = from c in this.Controls.OfType<CheckBox>()
+                             where c.Checked
+                             select c.Text;
+
+            checkedCheckbox=checkboxes.ToList();
+        }
+
+        /// <summary>
+        /// On Button Cancel Click
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnCancel_Click(object sender, EventArgs e)
         {
             if (backgroundWorker1.WorkerSupportsCancellation == true)
@@ -81,14 +148,32 @@ namespace ItunesBackupFileExtractor
         }
 
         /// <summary>
-        /// 
+        /// On Background Worker is doing is Hard Work
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            foreach (string filename in BackupFiles)
+            List<MbdbExtract.MBDBFile> MbdbFileList = MbdbExtract.ReadMBDB(iTunesBackupFolder);
+
+            if (MbdbFileList==null)
             {
+                throw new Exception("Bad MBDB file.");
+            }
+
+            if (!checkedCheckbox.Contains("All"))
+            {
+                //Get all the extensions corresponding to the checked chekbox
+                var extensionType = ExtensionTypeList.Where(et => checkedCheckbox.Contains(et.Type)).Select(m => m.Extension);
+
+                //Only get the files with the right extension
+                MbdbFileList = MbdbFileList.Where(bf => !string.IsNullOrEmpty(Path.GetExtension(bf.FilePath)) && extensionType.Contains(Path.GetExtension(bf.FilePath).Replace(".", ""))).ToList();
+            }
+
+            //Ok let's go!
+            foreach (string filename in BackupFiles)
+            { 
+                //Check if the operation has been canceled
                 if (backgroundWorker1.CancellationPending == true)
                 {
                     e.Cancel = true;
@@ -97,10 +182,18 @@ namespace ItunesBackupFileExtractor
 
                 String FilenameWithExtension = Path.GetFileName(filename);
                 string[] FilenameSplit = FilenameWithExtension.Split('.');
-                string ext = FilenameSplit.Count() == 1 ? GetExtension(filename, MagicNumberList) : null;
+                string ext = FilenameSplit.Count() == 1 ? FilenameWithExtension : null;
                 if (ext != null)
                 {
-                    File.Copy(filename, Path.ChangeExtension(OutputFolder + FilenameWithExtension, ext),true);
+                    //
+                    var backupfile = MbdbFileList.Where(bf => bf.EncryptedFilename == ext).Select(bf => bf.FilePath);
+                    
+                    //if backupfile has element we get the first one
+                    string path=backupfile.Count() > 0 ? backupfile.FirstOrDefault() : null;
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        File.Copy(filename, OutputFolder+ Path.GetFileName(path), true);
+                    }
                 }
             }
         }
@@ -115,11 +208,11 @@ namespace ItunesBackupFileExtractor
             btnCancel.Enabled = false;
             btnLaunch.Enabled = true;
 
-            if ((e.Cancelled == true))
+            if (e.Cancelled == true)
             {
                 MessageBox.Show("Backup extract canceled!", "Canceled", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            else if (!(e.Error == null))
+            else if (e.Error != null)
             {
                 MessageBox.Show(e.Error.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -130,7 +223,7 @@ namespace ItunesBackupFileExtractor
         }
 
         /// <summary>
-        /// Browse and return the selected path
+        /// Browse folder and return the selected path
         /// </summary>
         /// <returns></returns>
         public static string BrowseMe()
@@ -145,53 +238,21 @@ namespace ItunesBackupFileExtractor
         }
 
         /// <summary>
-        /// Extract the extension from the file
-        /// </summary>
-        /// <param name="filename"></param>
-        /// <param name="MagicNumberList"></param>
-        /// <returns></returns>
-        public static string GetExtension(string filename, IEnumerable<MagicNumberElem> MagicNumberList)
-        {
-            using (BinaryReader br = new BinaryReader(File.Open(filename, FileMode.Open)))
-            {
-                byte[] buffer = new byte[16];
-                buffer = br.ReadBytes(16);
-                string HexString = GetHexStringByByteArray(buffer);
-                var extension = MagicNumberList.Where(m => HexString.Contains(m.MagicNumber)).Select(m => m.Extension);
-                return extension.Count() > 0 ? extension.FirstOrDefault() : null;
-            }
-        }
-
-        /// <summary>
-        /// Concat the byte array in a string
-        /// </summary>
-        /// <param name="buffer"></param>
-        /// <returns></returns>
-        public static string GetHexStringByByteArray(byte[] buffer)
-        {
-            string HexString = string.Empty;
-            foreach (byte b in buffer)
-            {
-                HexString += b.ToString("X2");
-            }
-            return HexString;
-        }
-
-        /// <summary>
-        /// Get all the MagicNumberElement contained in the config file
+        /// Get all the ExtensionTypeElement contained in the config file
         /// </summary>
         /// <returns></returns>
-        public static IEnumerable<MagicNumberElem> GetMagicNumberList()
+        public static IEnumerable<ExtensionTypeElem> GetExtensionTypeList()
         {
-            ConfigHelper section = (ConfigHelper)ConfigurationManager.GetSection("MagicNumberList");
+            ConfigHelper section = (ConfigHelper)ConfigurationManager.GetSection("ExtensionTypeList");
             if (section != null)
             {
-                return section.MNCol.Cast<MagicNumberElem>();
+                return section.ETCol.Cast<ExtensionTypeElem>();
             }
             else
             {
                 throw new Exception("Bad file format. Check your config file and try again.");
             }
         }
+
     }
 }

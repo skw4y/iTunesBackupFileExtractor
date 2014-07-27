@@ -8,39 +8,31 @@ namespace ItunesBackupFileExtractor
 {
     public class ConfigHelper : ConfigurationSection
     {
-        [ConfigurationProperty("MagicNumberElements")]
-        public MagicNumberCollection MNCol
+        [ConfigurationProperty("ExtensionTypeElements")]
+        public ExtensionTypeCollection ETCol
         {
-            get { return ((MagicNumberCollection)(base["MagicNumberElements"])); }
+            get { return ((ExtensionTypeCollection)(base["ExtensionTypeElements"])); }
         }
-
-
-        //[ConfigurationProperty("MagicNumberElements")]
-        //[ConfigurationCollection(typeof(MagicNumberElem), AddItemName = "add", ClearItemsName = "clear", RemoveItemName = "remove")]
-        //public GenericConfigurationElementCollection<MagicNumberElem> MNCol
-        //{
-        //    get { return (GenericConfigurationElementCollection<MagicNumberElem>)this["MagicNumberElements"]; }
-        //}
     }
 
-    [ConfigurationCollection(typeof(MagicNumberElem))]
-    public class MagicNumberCollection : ConfigurationElementCollection
+    [ConfigurationCollection(typeof(ExtensionTypeElem))]
+    public class ExtensionTypeCollection : ConfigurationElementCollection
     {
         protected override ConfigurationElement CreateNewElement()
         {
-            return new MagicNumberElem();
+            return new ExtensionTypeElem();
         }
 
         protected override object GetElementKey(ConfigurationElement element)
         {
-            return ((MagicNumberElem)(element)).MagicNumber;
+            return ((ExtensionTypeElem)(element)).Extension;
         }
 
-        public MagicNumberElem this[int idx]
+        public ExtensionTypeElem this[int idx]
         {
             get
             {
-                return (MagicNumberElem)BaseGet(idx);
+                return (ExtensionTypeElem)BaseGet(idx);
             }
         }
     }
@@ -67,14 +59,14 @@ namespace ItunesBackupFileExtractor
         }
     }
 
-    public class MagicNumberElem : ConfigurationElement
+    public class ExtensionTypeElem : ConfigurationElement
     {
-        [ConfigurationProperty("MagicNumber", DefaultValue = "")]
-        public string MagicNumber
+        [ConfigurationProperty("Type", DefaultValue = "")]
+        public string Type
         {
             get
             {
-                return ((string)(base["MagicNumber"]));
+                return ((string)(base["Type"]));
             }
         }
 
