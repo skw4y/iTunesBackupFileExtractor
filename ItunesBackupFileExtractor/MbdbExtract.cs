@@ -1,4 +1,6 @@
-﻿using System;
+#define DEBUG
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -49,11 +51,22 @@ namespace ItunesBackupFileExtractor
                     byte[] sha1Buffer = sha1Crypt.ComputeHash(ASCIIEncoding.UTF8.GetBytes(string.Format("{0}-{1}", MbdbFile.Domain, MbdbFile.FilePath)));
                     MbdbFile.EncryptedFilename = GetHexStringByByteArray(sha1Buffer);
 
-                    //Add MbdbFile to list
-                    mbdbFiles.Add(MbdbFile);
+#if DEBUG
+                    if (MbdbFile.Domain.StartsWith("com.apple.TextEncoding") || MbdbFile.Domain.StartsWith("com.apple.assetsd"))
+                    {
+                        //Do we need to do anything here??
+                    }
+                    else
+                    {
+#endif
+                        //Add MbdbFile to list
+                        mbdbFiles.Add(MbdbFile);
 
-                    //Ignoring the rest
-                    NextFile(fs);
+                        //Ignoring the rest
+                        NextFile(fs);
+#if DEBUG
+                    }
+#endif
                 }
 
                 return mbdbFiles;
