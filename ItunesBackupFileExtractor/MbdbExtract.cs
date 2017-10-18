@@ -15,7 +15,7 @@ namespace ItunesBackupFileExtractor
             public string FilePath;
             public string EncryptedFilename;
         }
-
+        
         /// <summary>
         /// Get the file list from the mbdb file
         /// </summary>
@@ -25,12 +25,12 @@ namespace ItunesBackupFileExtractor
         {
             List<MBDBFile> mbdbFiles = new List<MBDBFile>();
             SHA1CryptoServiceProvider sha1Crypt = new SHA1CryptoServiceProvider();
-            FileStream fs = new FileStream(iTunesBackupFolder+"Manifest.mbdb", FileMode.Open, FileAccess.Read);
+            FileStream fs = new FileStream(Path.Combine(iTunesBackupFolder, Constants.ManifestFile), FileMode.Open, FileAccess.Read);
 
             byte[] MbdbBuffer = GetBuffer(fs, 6);
-            
+
             //Check first bytes of mbdb file
-            if (GetHexStringByByteArray(MbdbBuffer) != "6d6264620500")
+            if (GetHexStringByByteArray(MbdbBuffer) != Constants.MbdbFirstBytes)
             {
                 return null;
             }
@@ -43,7 +43,7 @@ namespace ItunesBackupFileExtractor
                     {
                         Domain = GetNextBufferString(fs),
                         FilePath = GetNextBufferString(fs)
-                    }; 
+                    };
 
                     //Encrypting domain and filepath to get the right filename
                     byte[] sha1Buffer = sha1Crypt.ComputeHash(ASCIIEncoding.UTF8.GetBytes(string.Format("{0}-{1}", MbdbFile.Domain, MbdbFile.FilePath)));
@@ -81,7 +81,7 @@ namespace ItunesBackupFileExtractor
         /// <param name="stm"></param>
         private static void NextFile(Stream stm)
         {
-            for (int i = 0; i  < 3; ++i)
+            for (int i = 0; i < 3; ++i)
             {
                 GetNextBuffer(stm);
             }
@@ -123,7 +123,7 @@ namespace ItunesBackupFileExtractor
         /// </summary>
         /// <param name="stm"></param>
         /// <returns></returns>
-        private static byte[] GetBuffer(Stream stm,int l)
+        private static byte[] GetBuffer(Stream stm, int l)
         {
             byte[] buffer = new byte[l];
             stm.Read(buffer, 0, l);

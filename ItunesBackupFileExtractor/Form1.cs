@@ -25,7 +25,6 @@ namespace ItunesBackupFileExtractor
 
         public Form1()
         {
-            
             InitializeComponent();
         }
 
@@ -74,7 +73,7 @@ namespace ItunesBackupFileExtractor
                 {
                     if (string.IsNullOrEmpty(txtBackupFolder.Text) || string.IsNullOrEmpty(txtOutputFolder.Text))
                     {
-                        throw new Exception("Please select the iTunes backup folder and the output folder.");
+                        throw new Exception(Constants.BckpUnselected);
                     }
 
                     OutputFolder = txtOutputFolder.Text.EndsWith("\\") ? txtOutputFolder.Text : txtOutputFolder.Text + "\\";
@@ -84,12 +83,12 @@ namespace ItunesBackupFileExtractor
                     BackupFiles = Directory.GetFiles(iTunesBackupFolder, "*.*", SearchOption.TopDirectoryOnly);
                     if (BackupFiles.Count() == 0)
                     {
-                        throw new Exception("Nothing found in your iTunes backup folder. Select the right folder and try again.");
+                        throw new Exception(Constants.DirectoryEmpty);
                     }
 
-                    if (checkedCheckbox == null || checkedCheckbox.Count==0)
+                    if (checkedCheckbox == null || checkedCheckbox.Count == 0)
                     {
-                        throw new Exception("Please select a checkbox.");
+                        throw new Exception(Constants.CheckboxUnselected);
                     }
 
                     //Getting file extensions from the config file
@@ -104,7 +103,7 @@ namespace ItunesBackupFileExtractor
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(ex.Message, Constants.ErrorTitle, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -131,7 +130,7 @@ namespace ItunesBackupFileExtractor
                              where c.Checked
                              select c.Text;
 
-            checkedCheckbox=checkboxes.ToList();
+            checkedCheckbox = checkboxes.ToList();
         }
 
         /// <summary>
@@ -156,12 +155,12 @@ namespace ItunesBackupFileExtractor
         {
             List<MbdbExtract.MBDBFile> MbdbFileList = MbdbExtract.ReadMBDB(iTunesBackupFolder);
 
-            if (MbdbFileList==null)
+            if (MbdbFileList == null)
             {
-                throw new Exception("Bad MBDB file.");
+                throw new Exception(Constants.BadMbdbFile);
             }
 
-            if (!checkedCheckbox.Contains("All"))
+            if (!checkedCheckbox.Contains(Constants.AllCheckbox))
             {
                 //Get all the extensions corresponding to the checked chekbox
                 var extensionType = ExtensionTypeList.Where(et => checkedCheckbox.Contains(et.Type)).Select(m => m.Extension);
@@ -172,7 +171,7 @@ namespace ItunesBackupFileExtractor
 
             //Ok let's go!
             foreach (string filename in BackupFiles)
-            { 
+            {
                 //Check if the operation has been canceled
                 if (backgroundWorker1.CancellationPending == true)
                 {
@@ -185,14 +184,14 @@ namespace ItunesBackupFileExtractor
                 string ext = FilenameSplit.Count() == 1 ? FilenameWithExtension : null;
                 if (ext != null)
                 {
-                    //
+                    //Getting the filepath
                     var backupfile = MbdbFileList.Where(bf => bf.EncryptedFilename == ext).Select(bf => bf.FilePath);
-                    
+
                     //if backupfile has element we get the first one
-                    string path=backupfile.Count() > 0 ? backupfile.FirstOrDefault() : null;
+                    string path = backupfile.Count() > 0 ? backupfile.FirstOrDefault() : null;
                     if (!string.IsNullOrEmpty(path))
                     {
-                        File.Copy(filename, OutputFolder+ Path.GetFileName(path), true);
+                        File.Copy(filename, Path.Combine(OutputFolder, Path.GetFileName(path)), true);
                     }
                 }
             }
@@ -210,15 +209,15 @@ namespace ItunesBackupFileExtractor
 
             if (e.Cancelled == true)
             {
-                MessageBox.Show("Backup extract canceled!", "Canceled", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(Constants.CanceledMessage, Constants.CanceledTitle, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             else if (e.Error != null)
             {
-                MessageBox.Show(e.Error.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(e.Error.Message, Constants.ErrorTitle, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             else
             {
-                MessageBox.Show("Backup extract done!", "Done", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(Constants.DoneMessage, Constants.DoneTitle, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
@@ -243,14 +242,14 @@ namespace ItunesBackupFileExtractor
         /// <returns></returns>
         public static IEnumerable<ExtensionTypeElem> GetExtensionTypeList()
         {
-            ConfigHelper section = (ConfigHelper)ConfigurationManager.GetSection("ExtensionTypeList");
+            ConfigHelper section = (ConfigHelper)ConfigurationManager.GetSection(Constants.ExtensionTypeSection);
             if (section != null)
             {
                 return section.ETCol.Cast<ExtensionTypeElem>();
             }
             else
             {
-                throw new Exception("Bad file format. Check your config file and try again.");
+                throw new Exception(Constants.BadConfigFile);
             }
         }
 
